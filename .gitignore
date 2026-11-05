@@ -4,3 +4,4 @@ __pycache__/
 convai-smoke/
 *.wav
 *.mp3
+demo/out/
