@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Render the demo voice-over with ElevenLabs and report each segment's duration."""
+import argparse
 import json
 import os
 import subprocess
@@ -8,8 +9,15 @@ from pathlib import Path
 
 KEY = subprocess.run(["security", "find-generic-password", "-s", "elevenlabs-api-key", "-w"],
                      capture_output=True, text=True).stdout.strip()
-OUT = Path(__file__).resolve().parent / "out" / "vo"
-OUT.mkdir(parents=True, exist_ok=True)
+NL_SCRIPT = [
+    ("s1", "Een voice-agent heeft drie knoppen die bepalen of iemand ophangt: het model erachter, de stem, en de prompt."),
+    ("s2", "Dit is een Hermes-plugin die die knoppen tools maakt. Eerst inspecteren: welk brein, welke stem, en weet de prompt überhaupt welke dag het is?"),
+    ("s3", "Elke wijziging is eerst een dry-run met de exacte diff, er wordt niets geschreven. Hetzelfde voor de prompt: datumgronding en een kortheidsregel, en twee keer draaien verandert niets."),
+    ("s4", "Dan praat hij echt met de agent over de WebSocket, in het Nederlands, en meet per beurt de tijd tot het eerste audio. Drie komma vier seconden bij de eerste beurt, twee komma drie bij de tweede. Dat is wat een beller voelt."),
+    ("s5", "Het transcript komt uit het gespreksrecord zelf, niet uit de stream, dus de meting is controleerbaar. Toepassen maakt eerst een backup, en één call draait het terug."),
+    ("s6", "Zes tools, dry-run als default, rollback bij elke schrijfactie. Ingediend voor de Hermes-plugincatalogus."),
+    ("s7", "Gebouwd voor de Hermes-pluginhackathon."),
+]
 
 SCRIPT = [
     ("s1", "A voice agent has three knobs that decide whether a caller hangs up: the model behind it, the voice, and the prompt."),
@@ -66,17 +74,24 @@ def duration(path: Path) -> float:
 
 
 def main() -> None:
-    voice = pick_voice()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--lang", choices=["en", "nl"], default="en")
+    parser.add_argument("--voice", default="", help="override the voice id")
+    args = parser.parse_args()
+    script = NL_SCRIPT if args.lang == "nl" else SCRIPT
+    out = Path(__file__).resolve().parent / "out" / ("vo_nl" if args.lang == "nl" else "vo")
+    out.mkdir(parents=True, exist_ok=True)
+    voice = args.voice or pick_voice()
     total = 0.0
     meta = []
-    for name, text in SCRIPT:
-        path = OUT / f"{name}.mp3"
+    for name, text in script:
+        path = out / f"{name}.mp3"
         tts(voice, text, path)
         d = duration(path)
         total += d
         meta.append({"id": name, "file": str(path), "seconds": round(d, 3), "text": text})
         print(f"{name}: {d:5.2f}s  {len(text)} chars")
-    (OUT / "segments.json").write_text(json.dumps({"voice_id": voice, "total": round(total, 3), "segments": meta}, indent=1))
+    (out / "segments.json").write_text(json.dumps({"voice_id": voice, "total": round(total, 3), "segments": meta}, indent=1))
     print(f"TOTAL narration: {total:.2f}s  (+1.2s tail = {total + 1.2:.2f}s video)")
 
 

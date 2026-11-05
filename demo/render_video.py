@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "out"
-VO = OUT / "vo"
+VO = OUT / (os.environ.get("DEMO_VO_DIR") or "vo")
 FFMPEG = os.path.expanduser("~/.local/bin/ffmpeg")
 W, H, FPS = 1920, 1080, 30
 GAP = 0.35          # silence between narration segments
@@ -222,7 +222,7 @@ def main() -> None:
         out.writeframes(b"\x00\x00\x00\x00" * int(44100 * TAIL))
 
     frames = int(total * FPS) + 1
-    video = OUT / "elevenlabs-convai-demo.mp4"
+    video = OUT / (os.environ.get("DEMO_OUT_NAME") or "elevenlabs-convai-demo.mp4")
     proc = subprocess.Popen([FFMPEG, "-y", "-v", "error",
                              "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
                              "-i", str(master),
