@@ -1,0 +1,32 @@
+name: elevenlabs-convai
+label: ElevenLabs ConvAI Ops
+kind: tools
+version: "0.1.0"
+author: Clarence Etnel
+homepage: https://github.com/c6zks4gssn-droid/hermes-elevenlabs-convai
+description: >
+  Operate ElevenLabs ConvAI voice agents from Hermes: inspect an agent's brain (LLM),
+  TTS model, voice and tool wiring; change those settings with a dry-run diff and a
+  rollback backup; harden a prompt with date grounding and a brevity rule; run a real
+  text conversation over the conversation WebSocket to measure time-to-first-audio per
+  turn; and pull the authoritative transcript, tool calls and credit cost afterwards.
+  Six tools in the elevenlabs_convai toolset. Dry-run by default on every write.
+requires_hermes: ">=0.21.6"
+provides_tools:
+  - convai_agents_list
+  - convai_agent_inspect
+  - convai_agent_configure
+  - convai_prompt_harden
+  - convai_voice_test
+  - convai_conversation
+provides_hooks: []
+requires_env:
+  - name: ELEVENLABS_API_KEY
+    description: "ElevenLabs API key (xi-api-key) with convai read/write and text-to-speech access"
+    prompt: "ElevenLabs API key"
+    password: true
+optional_env:
+  - name: CONVAI_BACKUP_DIR
+    description: "Where prompt/config backups are written (default: <HERMES_HOME>/cache/convai-backups)"
+    prompt: "ConvAI backup directory"
+    password: false
