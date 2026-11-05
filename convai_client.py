@@ -307,8 +307,19 @@ def wav_to_mp3(wav_path: str) -> Optional[str]:
 
 
 # ── transcript ────────────────────────────────────────────────────────────────
-def conversation_detail(conversation_id: str) -> Dict[str, Any]:
+def conversation_detail(conversation_id: str, wait_seconds: float = 0.0) -> Dict[str, Any]:
+    """Fetch a conversation record.
+
+    ElevenLabs keeps a fresh conversation in ``processing`` for a few seconds after the
+    WebSocket closes; with ``wait_seconds`` this polls until the record is final so the
+    transcript is not empty. Polling stops early on ``done``/``failed``/``error``.
+    """
     data = http("GET", f"/v1/convai/conversations/{urllib.parse.quote(conversation_id)}")
+    if wait_seconds and data.get("status") == "processing":
+        deadline = time.time() + float(wait_seconds)
+        while time.time() < deadline and data.get("status") == "processing":
+            time.sleep(1.5)
+            data = http("GET", f"/v1/convai/conversations/{urllib.parse.quote(conversation_id)}")
     metadata = data.get("metadata") or {}
     cost = metadata.get("cost") or {}
     transcript = []

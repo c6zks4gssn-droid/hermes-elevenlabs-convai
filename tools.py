@@ -292,6 +292,8 @@ CONVERSATION_SCHEMA = {
         "type": "object",
         "properties": {
             "conversation_id": {"type": "string", "description": "conv_... id from convai_voice_test"},
+            "wait_seconds": {"type": "number",
+                             "description": "Poll while the record is still 'processing' (default 0; 15 is a good value right after a test)"},
         },
         "required": ["conversation_id"],
     },
@@ -300,7 +302,7 @@ CONVERSATION_SCHEMA = {
 
 def _handle_conversation(args: Dict[str, Any]) -> str:
     try:
-        detail = core.conversation_detail(args["conversation_id"])
+        detail = core.conversation_detail(args["conversation_id"], float(args.get("wait_seconds") or 0))
         detail["tool_call_count"] = sum(len(t["tool_calls"]) for t in detail["transcript"])
         return _dump(detail)
     except Exception as exc:
